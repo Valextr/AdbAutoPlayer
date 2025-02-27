@@ -1,14 +1,11 @@
 import logging
 import re
 from abc import ABC
-from time import sleep
-from typing import Callable
-
-from adb_auto_player.config_loader import get_games_dir
-from adb_auto_player.exceptions import NotInitializedError
-from adb_auto_player.game import Game
+from collections.abc import Callable
 from pathlib import Path
+from time import sleep
 
+from adb_auto_player import ConfigLoader, Game, NotInitializedError
 from adb_auto_player.games.afk_journey.config import Config
 from adb_auto_player.template_matching import MatchMode
 
@@ -21,6 +18,8 @@ class AFKJourneyBase(Game, ABC):
             "com.farlightgames.igame.gp",
         ]
 
+    config_loader = ConfigLoader()
+    games_dir: Path = config_loader.games_dir
     template_dir_path: Path | None = None
     config_file_path: Path | None = None
 
@@ -46,20 +45,18 @@ class AFKJourneyBase(Game, ABC):
             self.set_device(device_streaming=device_streaming)
         if self.config is None:
             self.load_config()
-        return None
 
     def get_template_dir_path(self) -> Path:
         if self.template_dir_path is not None:
             return self.template_dir_path
 
-        games_dir = get_games_dir()
-        self.template_dir_path = games_dir / "afk_journey" / "templates"
+        self.template_dir_path = self.games_dir / "afk_journey" / "templates"
         logging.debug(f"AFKJourney template dir: {self.template_dir_path}")
         return self.template_dir_path
 
     def load_config(self) -> None:
         if self.config_file_path is None:
-            self.config_file_path = get_games_dir() / "afk_journey" / "AFKJourney.toml"
+            self.config_file_path = self.games_dir / "afk_journey" / "AFKJourney.toml"
             logging.debug(f"AFK Journey config path: {self.config_file_path}")
         self.config = Config.from_toml(self.config_file_path)
 
@@ -437,7 +434,6 @@ class AFKJourneyBase(Game, ABC):
         )
         if confirm:
             self.click(*confirm)
-        return None
 
     def _handle_guide_popup(
         self,
@@ -452,4 +448,3 @@ class AFKJourneyBase(Game, ABC):
             _, x, y = result
             self.click(x, y)
             sleep(1)
-        return

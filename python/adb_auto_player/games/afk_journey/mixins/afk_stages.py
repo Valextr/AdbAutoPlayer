@@ -1,7 +1,7 @@
 import logging
 from abc import ABC
 
-from adb_auto_player.exceptions import TimeoutException
+from adb_auto_player.exceptions import TimeoutError
 from adb_auto_player.games.afk_journey.afk_journey_base import AFKJourneyBase
 
 
@@ -19,17 +19,16 @@ class AFKStagesMixin(AFKJourneyBase, ABC):
             self.store[self.STORE_SEASON] = season
             try:
                 self.__start_afk_stage()
-            except TimeoutException as e:
+            except TimeoutError as e:
                 logging.warning(f"{e}")
             if self.get_config().afk_stages.push_both_modes:
                 self.store[self.STORE_SEASON] = not season
                 try:
                     self.__start_afk_stage()
-                except TimeoutException as e:
+                except TimeoutError as e:
                     logging.warning(f"{e}")
             if not self.get_config().afk_stages.repeat:
                 break
-        return None
 
     def __start_afk_stage(self) -> None:
         stages_pushed: int = 0
@@ -42,7 +41,6 @@ class AFKStagesMixin(AFKJourneyBase, ABC):
         ):
             stages_pushed += 1
             logging.info(f"{stages_name} pushed: {stages_pushed}")
-        return None
 
     def __get_current_afk_stages_name(self) -> str:
         season = self.store.get(self.STORE_SEASON, False)

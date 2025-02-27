@@ -1,14 +1,13 @@
 from adb_auto_player.command import Command
-
-from adb_auto_player.games.afk_journey.mixins.afk_stages import AFKStagesMixin
-from adb_auto_player.games.afk_journey.mixins.arcane_labyrinth import (
+from adb_auto_player.games.afk_journey import (
+    AFKStagesMixin,
     ArcaneLabyrinthMixin,
+    AssistMixin,
+    Config,
+    DurasTrialsMixin,
+    EventMixin,
+    LegendTrialMixin,
 )
-from adb_auto_player.games.afk_journey.mixins.assist import AssistMixin
-from adb_auto_player.games.afk_journey.config import Config
-from adb_auto_player.games.afk_journey.mixins.duras_trials import DurasTrialsMixin
-from adb_auto_player.games.afk_journey.mixins.event import EventMixin
-from adb_auto_player.games.afk_journey.mixins.legend_trial import LegendTrialMixin
 from adb_auto_player.ipc.game_gui import GameGUIOptions
 
 

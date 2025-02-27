@@ -3,7 +3,7 @@ from abc import ABC
 from time import sleep
 from typing import NoReturn
 
-from adb_auto_player.exceptions import TimeoutException
+from adb_auto_player.exceptions import TimeoutError
 from adb_auto_player.games.afk_journey.afk_journey_base import AFKJourneyBase
 from adb_auto_player.template_matching import MatchMode
 
@@ -75,7 +75,6 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 sleep(0.2)
             else:
                 break
-        return
 
     def _add_keys_farmed(self, keys: int):
         self.arcane_lucky_flip_keys += keys
@@ -103,7 +102,7 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 while self.__handle_arcane_labyrinth():
                     sleep(1)
 
-            except TimeoutException as e:
+            except TimeoutError as e:
                 logging.warning(f"{e}")
                 continue
             except BattleCannotBeStartedError as e:
@@ -147,7 +146,6 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
         )
         if confirm:
             self.click(*confirm)
-        return
 
     def __handle_arcane_labyrinth(self) -> bool:
         templates = [
@@ -598,4 +596,3 @@ class ArcaneLabyrinthMixin(AFKJourneyBase, ABC):
                 case _:
                     self.click(x, y)
                     break
-        return

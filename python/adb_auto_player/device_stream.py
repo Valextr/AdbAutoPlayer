@@ -1,15 +1,15 @@
-import threading
 import logging
-import time
 import platform
-from PIL import Image
 import queue
-from adbutils import AdbDevice, AdbConnection
+import threading
+import time
 
+from adbutils import AdbConnection, AdbDevice
 from av.codec.context import CodecContext
+from PIL import Image
 
 
-class StreamingNotSupportedException(Exception):
+class StreamingNotSupported(Exception):
     pass
 
 
@@ -40,9 +40,7 @@ class DeviceStream:
         )
 
         if self.is_arm_mac:
-            raise StreamingNotSupportedException(
-                "Device Stream is not implemented for macOS"
-            )
+            raise StreamingNotSupported("Device Stream is not implemented for macOS")
 
     def start(self) -> None:
         """Start the screen streaming thread."""
@@ -91,7 +89,6 @@ class DeviceStream:
         # maybe we can just brew install scrcpy and try with that?
         logging.error("Device Stream is not implemented for macOS")
         self.stop()
-        return
 
     def _handle_stream_windows(self) -> None:
         self._process = self.device.shell(
@@ -128,7 +125,6 @@ class DeviceStream:
                 if len(buffer) > 1024 * 1024:
                     buffer = buffer[-1024 * 1024 :]
                 continue
-        return
 
     def _stream_screen(self) -> None:
         """Background thread that continuously captures frames."""
@@ -146,4 +142,3 @@ class DeviceStream:
                 if self._process:
                     self._process.close()
                     self._process = None
-        return

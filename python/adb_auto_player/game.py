@@ -1,28 +1,26 @@
 import io
+import logging
 from abc import abstractmethod
+from collections.abc import Callable
 from pathlib import Path
 from time import sleep, time
-from typing import Any, TypeVar, Callable, Literal
+from typing import Any, Literal, TypeVar
 
-from PIL import Image
-from adbutils import AdbDevice
-from pydantic import BaseModel
-
-import adb_auto_player.adb as adb
-import logging
-import adb_auto_player.template_matching as template_matching
-import adb_auto_player.config_loader as config_loader
-from adb_auto_player.command import Command
-from adb_auto_player.device_stream import DeviceStream, StreamingNotSupportedException
-from adb_auto_player.exceptions import (
-    UnsupportedResolutionException,
-    TimeoutException,
-    AdbException,
+from adb_auto_player import (
+    Command,
+    GenericAdbError,
+    NoPreviousScreenshotError,
     NotInitializedError,
-    NoPreviousScreenshotException,
+    TimeoutError,
+    UnsupportedResolutionError,
+    adb,
+    template_matching,
 )
 from adb_auto_player.ipc.game_gui import GameGUIOptions, MenuOption
 from adb_auto_player.template_matching import MatchMode
+from adbutils._device import AdbDevice
+from PIL import Image
+from pydantic import BaseModel
 
 
 class Game:
@@ -82,9 +80,7 @@ class Game:
         try:
             width, height = map(int, resolution.split("x"))
         except ValueError:
-            raise UnsupportedResolutionException(
-                f"Invalid resolution format: {resolution}"
-            )
+            raise UnsupportedResolutionError(f"Invalid resolution format: {resolution}")
 
         is_supported = False
         for supported_resolution in supported_resolutions:
@@ -101,12 +97,12 @@ class Game:
                         is_supported = True
                         break
                 except ValueError:
-                    raise UnsupportedResolutionException(
+                    raise UnsupportedResolutionError(
                         f"Invalid aspect ratio format: {supported_resolution}"
                     )
 
         if not is_supported:
-            raise UnsupportedResolutionException(
+            raise UnsupportedResolutionError(
                 "This bot only supports these resolutions: "
                 f"{', '.join(supported_resolutions)}"
             )
@@ -118,7 +114,7 @@ class Game:
             and not self.supports_landscape
             and not adb.is_portrait(self.device)
         ):
-            raise UnsupportedResolutionException(
+            raise UnsupportedResolutionError(
                 "This bot only works in Portrait mode: "
                 "https://yulesxoxo.github.io/AdbAutoPlayer/user-guide/"
                 "troubleshoot.html#this-bot-only-works-in-portrait-mode"
@@ -129,13 +125,11 @@ class Game:
             and not self.supports_portrait
             and adb.is_portrait(self.device)
         ):
-            raise UnsupportedResolutionException(
+            raise UnsupportedResolutionError(
                 "This bot only works in Landscape mode: "
                 "https://yulesxoxo.github.io/AdbAutoPlayer/user-guide/"
                 "troubleshoot.html#this-bot-only-works-in-portrait-mode"
             )
-
-        return None
 
     def get_scale_factor(self) -> float:
         if self.scale_factor:
@@ -236,7 +230,7 @@ class Game:
                 screenshot_data = screenshot_data[png_start_index:]
             self.previous_screenshot = Image.open(io.BytesIO(screenshot_data))
             return self.previous_screenshot
-        raise AdbException(
+        raise GenericAdbError(
             f"Screenshots cannot be recorded from device: {self.get_device().serial}"
         )
 
@@ -284,7 +278,7 @@ class Game:
         # this means the roi will never change
         prev = self.previous_screenshot
         if prev is None:
-            raise NoPreviousScreenshotException(
+            raise NoPreviousScreenshotError(
                 "Region of interest cannot have changed if "
                 "there is no previous screenshot."
             )
@@ -523,7 +517,6 @@ class Game:
             timeout_message=timeout_message,
             result_should_be_none=True,
         )
-        return None
 
     def wait_for_any_template(
         self,
@@ -653,7 +646,7 @@ class Game:
             time_spent_waiting += delay
 
             if time_spent_waiting >= timeout or end_time_exceeded:
-                raise TimeoutException(f"{timeout_message}")
+                raise TimeoutError(f"{timeout_message}")
 
             if end_time <= time():
                 end_time_exceeded = True

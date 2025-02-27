@@ -1,14 +1,14 @@
 import time
 import unittest
-from unittest.mock import patch, DEFAULT
-
 from pathlib import Path
+from unittest.mock import DEFAULT, patch
+
+from adb_auto_player import template_matching
 from adb_auto_player.exceptions import (
-    NoPreviousScreenshotException,
-    TimeoutException,
+    NoPreviousScreenshotError,
+    TimeoutError,
 )
 from adb_auto_player.game import Game
-import adb_auto_player.template_matching as template_matching
 
 TEST_DATA_DIR = Path(__file__).parent / "data"
 
@@ -17,7 +17,7 @@ class TestGame(unittest.TestCase):
     def test_wait_for_roi_change_validation(self):
         game = Game()
 
-        with self.assertRaises(NoPreviousScreenshotException):
+        with self.assertRaises(NoPreviousScreenshotError):
             game.wait_for_roi_change()
 
         game.previous_screenshot = template_matching.load_image(
@@ -32,7 +32,6 @@ class TestGame(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             game.wait_for_roi_change(crop_left=0.8, crop_right=0.5)
-        return
 
     @patch.object(Game, "get_screenshot")
     def test_wait_for_roi_change_no_crop(self, get_screenshot):
@@ -44,7 +43,7 @@ class TestGame(unittest.TestCase):
         game.previous_screenshot = template_matching.load_image(f1)
         get_screenshot.return_value = template_matching.load_image(f1)
 
-        with self.assertRaises(TimeoutException):
+        with self.assertRaises(TimeoutError):
             game.wait_for_roi_change(timeout=1.0)
 
         get_screenshot.return_value = template_matching.load_image(f2)
@@ -60,7 +59,7 @@ class TestGame(unittest.TestCase):
         game.previous_screenshot = template_matching.load_image(f1)
         get_screenshot.return_value = template_matching.load_image(f1)
 
-        with self.assertRaises(TimeoutException):
+        with self.assertRaises(TimeoutError):
             game.wait_for_roi_change(
                 crop_left=0.2,
                 crop_right=0.2,

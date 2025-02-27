@@ -1,18 +1,16 @@
+import argparse
 import json
 import logging
 import sys
-import argparse
 from typing import NoReturn
 
-import adb_auto_player.adb
-from adb_auto_player import logging_setup
-from adb_auto_player.command import Command
-from adb_auto_player.game import Game
-from adb_auto_player.games.afk_journey.main import AFKJourney
-from adb_auto_player.games.infinity_nikki.main import InfinityNikki
+from adb_auto_player.adb import wm_size_reset, get_device, get_running_app
+from adb_auto_player import Command, Game
+from adb_auto_player.games import AFKJourney, InfinityNikki
+from adb_auto_player.logging_setup import setup_json_log_handler, setup_text_log_handler
 
 
-def __get_games() -> list[Game]:
+def _get_games() -> list[Game]:
     return [
         AFKJourney(),
         InfinityNikki(),
@@ -20,7 +18,7 @@ def __get_games() -> list[Game]:
 
 
 def main() -> None:
-    commands = __get_commands()
+    commands = _get_commands()
     command_names = []
     for cmd in commands:
         command_names.append(cmd.name)
@@ -47,9 +45,9 @@ def main() -> None:
     args = parser.parse_args()
     match args.output:
         case "json":
-            logging_setup.setup_json_log_handler(args.log_level)
+            setup_json_log_handler(args.log_level)
         case "text":
-            logging_setup.setup_text_log_handler(args.log_level)
+            setup_text_log_handler(args.log_level)
         case _:
             logging.getLogger().setLevel(args.log_level)
 
@@ -62,57 +60,56 @@ def main() -> None:
 
 def get_gui_games_menu() -> str:
     menu = []
-
-    for game in __get_games():
+    for game in _get_games():
         options = game.get_gui_options()
         menu.append(options.to_dict())
 
     return json.dumps(menu)
 
 
-def __get_commands() -> list[Command]:
+def _get_commands() -> list[Command]:
     commands = [
         Command(
             name="GUIGamesMenu",
-            action=__print_gui_games_menu,
+            action=_print_gui_games_menu,
         ),
         Command(
             name="WMSizeReset",
-            action=adb_auto_player.adb.wm_size_reset,
+            action=wm_size_reset,
         ),
         Command(
             name="GetRunningGame",
-            action=__print_running_game,
+            action=_print_running_game,
         ),
     ]
 
-    for game in __get_games():
+    for game in _get_games():
         commands += game.get_cli_menu_commands()
 
     return commands
 
 
-def __print_gui_games_menu() -> None:
+def _print_gui_games_menu() -> None:
     print(get_gui_games_menu())
     return None
 
 
-def __print_running_game() -> None:
-    running_game = __get_running_game()
+def _print_running_game() -> None:
+    running_game = _get_running_game()
     if running_game:
-        logging.info(f"Running game: {__get_running_game()}")
+        logging.info(f"Running game: {_get_running_game()}")
     else:
         logging.debug("No running game")
     return None
 
 
-def __get_running_game() -> str | None:
+def _get_running_game() -> str | None:
     try:
-        device = adb_auto_player.adb.get_device()
-        package_name = adb_auto_player.adb.get_running_app(device)
+        device = get_device()
+        package_name = get_running_app(device)
         if not package_name:
             return None
-        for game in __get_games():
+        for game in _get_games():
             if any(pn in package_name for pn in game.package_names):
                 return game.get_gui_options().game_title
     except Exception as e:

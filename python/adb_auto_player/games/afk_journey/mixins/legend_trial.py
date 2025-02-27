@@ -2,7 +2,7 @@ import logging
 from abc import ABC
 from time import sleep
 
-from adb_auto_player.exceptions import TimeoutException, NotFoundException
+from adb_auto_player.exceptions import NotFoundError, TimeoutError
 from adb_auto_player.games.afk_journey.afk_journey_base import AFKJourneyBase
 
 
@@ -12,7 +12,7 @@ class LegendTrialMixin(AFKJourneyBase, ABC):
         self.store[self.STORE_MODE] = self.MODE_LEGEND_TRIALS
         try:
             self.__navigate_to_legend_trials_select_tower()
-        except TimeoutException as e:
+        except TimeoutError as e:
             logging.error(f"{e}")
             return None
 
@@ -71,7 +71,7 @@ class LegendTrialMixin(AFKJourneyBase, ABC):
             self.click(*result)
             try:
                 self.__select_legend_trials_floor(faction)
-            except (TimeoutException, NotFoundException) as e:
+            except (TimeoutError, NotFoundError) as e:
                 logging.error(f"{e}")
                 self.press_back_button()
                 sleep(3)
@@ -87,7 +87,7 @@ class LegendTrialMixin(AFKJourneyBase, ABC):
                 result = self._handle_battle_screen(
                     self.get_config().legend_trials.use_suggested_formations
                 )
-            except TimeoutException as e:
+            except TimeoutError as e:
                 logging.warning(f"{e}")
                 return None
 
@@ -133,7 +133,6 @@ class LegendTrialMixin(AFKJourneyBase, ABC):
         )
         _, x, y = challenge_btn
         self.click(x, y)
-        return None
 
     def __navigate_to_legend_trials_select_tower(self) -> None:
         def check_for_legend_trials_s_header() -> bool:
@@ -167,4 +166,3 @@ class LegendTrialMixin(AFKJourneyBase, ABC):
                 crop_bottom=0.8,
                 timeout_message="Could not find Season Legend Trial Header",
             )
-        return None

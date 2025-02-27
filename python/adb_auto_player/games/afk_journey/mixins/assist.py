@@ -2,7 +2,7 @@ import logging
 from abc import ABC
 from time import sleep
 
-from adb_auto_player.exceptions import TimeoutException
+from adb_auto_player.exceptions import TimeoutError
 from adb_auto_player.games.afk_journey.afk_journey_base import AFKJourneyBase
 
 
@@ -25,7 +25,6 @@ class AssistMixin(AFKJourneyBase, ABC):
                 logging.info(f"Assist #{count}")
 
         logging.info("Finished: Synergy & CC")
-        return None
 
     def __find_synergy_or_corrupt_creature(self) -> bool:
         result = self.find_any_template(
@@ -96,7 +95,7 @@ class AssistMixin(AFKJourneyBase, ABC):
                 delay=0.1,
                 timeout=self.FAST_TIMEOUT,
             )
-        except TimeoutException:
+        except TimeoutError:
             return False
         if template == "assist/chat_button.png":
             if (
@@ -118,7 +117,7 @@ class AssistMixin(AFKJourneyBase, ABC):
                 logging.info("Clicking Corrupt Creature join now button")
                 try:
                     return self.__handle_corrupt_creature()
-                except TimeoutException:
+                except TimeoutError:
                     logging.warning(
                         "Clicked join now button too late or something went wrong"
                     )
